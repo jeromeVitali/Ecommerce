@@ -10,6 +10,9 @@ session_start();
 <br>
 <a href="?action=add">Ajouter un produit</a>
 <a href="?action=modifyanddelete">Modifier / Supprimer un produit</a> <br><br>
+<a href="?action=add_category">Ajouter une categorie</a>
+<a href="?action=modifyanddelete_category">Modifier / Supprimer une categorie</a> <br><br>
+
 
 <?php
 
@@ -123,8 +126,9 @@ imagecopyresampled($image_finale,$image_src,0,0,0,0,$new_width[0],$new_height[1]
                 
                 if ($title && $descript && $price) {
                     
+                    $category=$_POST['category'];
                     
-                    $insert = $db->prepare("INSERT INTO products VALUES (0, '$title','$descript','$price')");
+                    $insert = $db->prepare("INSERT INTO products VALUES (0, '$title','$descript','$price', '$category')");
                     $insert->execute();
                     
                     
@@ -142,6 +146,19 @@ imagecopyresampled($image_finale,$image_src,0,0,0,0,$new_width[0],$new_height[1]
 <h3>Nom du produit: </h3><input type="text" name='title'/>
 <h3>Descirption du produit: </h3><textarea name='descript'/> </textarea>
 <h3>Prix du produit: </h3><input type="text" name='price'/> <br>
+<h3>Categorie: </h3><select name='category'> 
+
+<?php $select=$db->query("SELECT * FROM category");
+    while ($s=$select->fetch(PDO::FETCH_OBJ)){ ?>
+
+       <option> <?= $s->name; ?></option> 
+
+<?php
+    }
+?>
+
+</select>
+<br>
 <h3>Image: </h3><input type="file" name='img'/> <br> <br><br>
 <input type="submit" name="submit"/>
 </form>
@@ -217,7 +234,103 @@ if (isset($_POST['submit'])) {
 
 
             
-        } else {
+        } else if($_GET['action']=='add_category'){
+
+            if(isset($_POST['submit'])){
+
+                $name= $_POST['name'];
+
+                if($name){
+
+
+                    $insert = $db->prepare("INSERT INTO category VALUES (0, '$name')");
+                    $insert->execute();
+
+                }else{
+
+                 echo 'Veuillez remplir tous les champs.';
+
+                }
+
+
+            }
+            ?>
+
+                <form action="" method="post"> 
+<h3>Nom de la categorie: </h3><input type="text" name="name"> <br> <br>
+<input type="submit" name="submit" value="Ajouter">
+
+                </form>
+
+            <?php
+
+        
+
+
+        }else if($_GET['action']=='modifyanddelete_category') {
+
+            $select = $db->prepare("SELECT * FROM category");
+            $select->execute();
+
+            while($s=$select->fetch(PDO::FETCH_OBJ)){
+
+                echo $s->name;
+                ?>
+					<a href="?action=modify_category&amp;id=<?php echo $s->id; ?>">Modifier</a>
+					<a href="?action=delete_category&amp;id=<?php echo $s->id; ?>">X</a><br/><br/>
+				<?php
+
+
+                
+            }
+
+
+        } else if($_GET['action']=='modify_category'){
+
+            $id=$_GET['id'];
+
+            $select = $db->prepare("SELECT * FROM category WHERE id=$id");
+            $select->execute();
+
+            $data = $select->fetch(PDO::FETCH_OBJ);
+
+            ?>
+
+<form action="" method="post">
+<h3>Nouveau nom de la categorie: </h3><input value="<?= $data->name; ?>" name="title"/>
+<input type="submit" name="submit" value="Modifier"/>
+</form>
+
+
+
+            <?php
+
+if (isset($_POST['submit'])) { 
+        
+    $title       = $_POST['title'];
+
+
+    $update = $db->prepare("UPDATE category SET name='$title' WHERE id='$id' ");
+    $update->execute();
+
+    header('Location: admin.php?action=modifyanddelete_category'); //permet lors de la redirection d'afficher le nom modif
+                    
+
+}
+
+
+
+
+        } else if($_GET['action']=='delete_category'){
+
+
+        $id=$_GET['id'];
+        $delete = $db->prepare("DELETE FROM category WHERE id=$id");
+        $delete->execute();
+
+header('Location: admin.php?action=modifyanddelete_category');
+
+    } else {
             
             die('Une erreur s\'est produite');
             
